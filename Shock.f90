@@ -19,7 +19,7 @@ subroutine applyShock(max_press_index,min_press_index,min_index,max_index,nt,tim
     stop_loop = .false.
     net_area_previous = 0
     
-    do while(stop_loop .eq. .false.)
+    do while(stop_loop .eqv. .false.)
     
         call locateLineIndex(min_index,min_press_index,lower_shock_line_index,time_sheared(upper_shock_line_index),nt,time_sheared)
         call locateLineIndex(min_press_index,max_press_index,mid_shock_line_index,time_sheared(upper_shock_line_index),nt,time_sheared)
