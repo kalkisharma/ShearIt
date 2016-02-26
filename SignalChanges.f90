@@ -90,7 +90,7 @@ subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondi
         time_sheared(i) = time_input(i) - delta_time
         
         ! If the signal begins curving back on itself
-        if(time_sheared(i) .lt. time_sheared(i - 1) .and. time_max .eq. .false.) then
+        if(time_sheared(i) .lt. time_sheared(i - 1) .and. time_max .eqv. .false.) then
         
             ! Point where signal curves on itself
             time_max = .true.
@@ -100,7 +100,7 @@ subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondi
         end if
         
         ! Check if time value is time_minimum if signal begins to curve back on itself
-        if(time_sheared(i) .gt. time_sheared(i - 1) .and. time_max .eq. .true.) then
+        if(time_sheared(i) .gt. time_sheared(i - 1) .and. time_max .eqv. .true.) then
         
             time_max = .false.
             time_minimum_index = i - 1
@@ -113,7 +113,7 @@ subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondi
 
         end if
         
-        if(time_sheared(i) - time_maximum .ge. 0 .and. time_min .eq. .true.) then
+        if(time_sheared(i) - time_maximum .ge. 0 .and. time_min .eqv. .true.) then
             
             max_shock_index = i - 1
             
@@ -142,7 +142,7 @@ subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondi
 !        ! Find the time where the shock ends
 !        difference = time_average - time_sheared(i)
 !        previous_difference = time_average - time_sheared(i - 1)
-!        if(abs(previous_difference) .lt. abs(difference) .and. time_half .eq. .true.) then
+!        if(abs(previous_difference) .lt. abs(difference) .and. time_half .eqv. .true.) then
 !        
 !            time_half = .false.
 !            time_shock_top_index = i - 1
