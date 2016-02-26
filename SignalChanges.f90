@@ -7,10 +7,33 @@ module Signal
     public:: amplifySignal
     public:: shearSignal
     public:: spaceSignal
+	public:: fineSignal
+	public:: courseSignal
     private:: calculateGamma
     private:: applyShock
     
     contains
+!*****************************************************************************
+subroutine fineSignal(nt, time_input, pressure_thickness, nt_fine, time_input_fine, pressure_thickness_fine)
+	integer,intent(in):: nt,nt_fine
+	real,dimension(nt),intent(in):: time_input, pressure_thickness
+	real,dimension(nt_fine),intent(out):: time_input_fine, pressure_thickness_fine
+	
+	integer:: i,j
+	
+	j = 1
+	do i = 1,nt_fine
+		if (i % 2 .ne. 0) then
+			time_input_fine(i) = time_input(j)
+			pressure_thickness_fine(i) = pressure_thickness(j)
+			j = j + 1
+		else if (i % 2 .eq. 0) then
+			time_input_fine(i) = (time_input(j) + time_input(j - 1)) / 2
+			pressure_thickness_fine(i) = (pressure_thickness(j) + pressure_thickness(j - 1)) / 2
+		end if
+	end do
+	
+end subroutine fineSignal
 !*****************************************************************************
 subroutine nonDimensionalizeSignal(nt,pressure_thickness,pressure_thickness_nondim)
     integer,intent(in):: nt
@@ -23,40 +46,6 @@ subroutine nonDimensionalizeSignal(nt,pressure_thickness,pressure_thickness_nond
     
     pressure_thickness_nondim = pressure_thickness / minimum
 end subroutine nonDimensionalizeSignal
-!*****************************************************************************
-subroutine amplifySignal(nt,mach,pressure_thickness,pressure_thickness_amplified)
-    integer,intent(in):: nt
-    real,intent(in):: mach
-    real,dimension(nt),intent(in):: pressure_thickness
-    real,dimension(nt),intent(out):: pressure_thickness_amplified
-    
-    real:: mach_factor,HSI_factor
-
-    mach_factor = 1 / (1 - mach)
-
-    if (mach_factor .lt. 2.5) then
-        HSI_factor = 1
-    else if (mach_factor .ge. 2.5 .and. mach_factor .lt. 3.33) then
-        HSI_factor = 0.1287 * mach + 1.1316
-    else if (mach_factor .ge. 3.33 .and. mach_factor .lt. 5) then
-        HSI_factor = 0.7321 * mach + 0.7092
-    ! Baeder's
-    else if (mach_factor .ge. 5 .and. mach_factor .lt. 10) then
-        HSI_factor = 87.225 * (mach ** 2) - 140.52 * mach + 57.89
-    ! Plots
-!    elseif (mach_factor .ge. 5 .and. mach_factor .lt. 10) then
-!        HSI_factor = 172.47 * (mach ** 2) - 287.49 * mach + 121.35
-    else if (mach_factor .ge. 10 .and. mach_factor .lt. 13.33) then
-        HSI_factor = 2.7613 * mach - 0.3968
-    else if (mach_factor .ge. 13.33) then
-        HSI_factor = 2646.1 * (mach ** 3) - 7593.1 * (mach ** 2) + 7238.2 * mach - 2290.6
-        HSI_factor = 1.085336538 * HSI_factor
-    else
-        HSI_factor = 1
-    end if
-    
-    pressure_thickness_amplified = pressure_thickness * HSI_factor
-end subroutine amplifySignal
 !*****************************************************************************
 subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondim,time_input,time_sheared)
     integer,intent(in):: nt
@@ -175,6 +164,57 @@ subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondi
     end do
     
 end subroutine shearSignal
+!*****************************************************************************
+subroutine amplifySignal(nt,mach,pressure_thickness,pressure_thickness_amplified)
+    integer,intent(in):: nt
+    real,intent(in):: mach
+    real,dimension(nt),intent(in):: pressure_thickness
+    real,dimension(nt),intent(out):: pressure_thickness_amplified
+    
+    real:: mach_factor,HSI_factor
+
+    mach_factor = 1 / (1 - mach)
+
+    if (mach_factor .lt. 2.5) then
+        HSI_factor = 1
+    else if (mach_factor .ge. 2.5 .and. mach_factor .lt. 3.33) then
+        HSI_factor = 0.1287 * mach + 1.1316
+    else if (mach_factor .ge. 3.33 .and. mach_factor .lt. 5) then
+        HSI_factor = 0.7321 * mach + 0.7092
+    ! Baeder's
+    else if (mach_factor .ge. 5 .and. mach_factor .lt. 10) then
+        HSI_factor = 87.225 * (mach ** 2) - 140.52 * mach + 57.89
+    ! Plots
+!    elseif (mach_factor .ge. 5 .and. mach_factor .lt. 10) then
+!        HSI_factor = 172.47 * (mach ** 2) - 287.49 * mach + 121.35
+    else if (mach_factor .ge. 10 .and. mach_factor .lt. 13.33) then
+        HSI_factor = 2.7613 * mach - 0.3968
+    else if (mach_factor .ge. 13.33) then
+        HSI_factor = 2646.1 * (mach ** 3) - 7593.1 * (mach ** 2) + 7238.2 * mach - 2290.6
+        ! HSI_factor = 1.085336538 * HSI_factor
+    else
+        HSI_factor = 1
+    end if
+    
+    pressure_thickness_amplified = pressure_thickness * HSI_factor
+end subroutine amplifySignal
+!*****************************************************************************
+subroutine coarseSignal(nt, time, pressure, nt_fine, time_sheared, pressure_thickness_amplified)
+	integer,intent(in):: nt, nt_fine
+	real,dimension(nt_fine),intent(in):: time_sheared, pressure_thickness_amplified
+	real,dimension(nt),intent(out):: time, pressure
+	
+	integer:: i,j
+	
+	j = 1
+	do i = 1,nt_fine
+		if (i % 2 .ne. 0) then	
+			time(j) = time_sheared(i)
+			pressure(j) = pressure_thickness_amplified(i)
+		end if
+	end do
+	
+end subroutine coarseSignal
 !*****************************************************************************
 subroutine calculateGamma(nt,mach,chord,gamma_angle,time,pressure)
     integer,intent(in):: nt
