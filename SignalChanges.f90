@@ -216,7 +216,7 @@ subroutine calculateGamma(nt,mach,chord,gamma_angle,time,pressure)
     
 !    time_shift = percent_shift * delta_time
     
-    gamma_angle = percent_shift * chord / 0.125 !atan(time_shift/abs(pressure(minimum_pressure_index(1))))
+    gamma_angle = percent_shift * chord / 0.25 !atan(time_shift/abs(pressure(minimum_pressure_index(1))))
 end subroutine
 !*****************************************************************************
 !subroutine applyShock(nt,time_sheared,time_shock_bottom_index,time_shock_top_index,pressure_thickness_amplified)
