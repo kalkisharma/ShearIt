@@ -7,8 +7,8 @@ module ReadIn
     
     contains
 !*****************************************************************************
-subroutine readParameters(chord,mach,nt)
-    integer,intent(out):: nt
+subroutine readParameters(chord,mach,nt,nt_fine)
+    integer,intent(out):: nt,nt_fine
     real,intent(out):: mach,chord
     
     open(unit = HSI_unit, file = HSI_file)
@@ -16,6 +16,8 @@ subroutine readParameters(chord,mach,nt)
     read(HSI_unit,*) mach
     read(HSI_unit,*) chord
     close(HSI_unit)
+	
+	nt_fine = 2 * nt - 1
 end subroutine ReadParameters
 !*****************************************************************************
 subroutine readPressureTimeHistory(nt,time_input,pressure_thickness,pressure_loading,pressure_total)

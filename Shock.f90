@@ -19,17 +19,18 @@ subroutine applyShock(max_press_index,min_press_index,min_index,max_index,nt,tim
     stop_loop = .false.
     net_area_previous = 0
     
-    do while(stop_loop .eqv. .false.)
+    do while(stop_loop .eq. .false.)
     
-        call locateLineIndex(min_index,min_press_index,lower_shock_line_index,time_sheared(upper_shock_line_index),nt,time_sheared)
-        call locateLineIndex(min_press_index,max_press_index,mid_shock_line_index,time_sheared(upper_shock_line_index),nt,time_sheared)
-        call integrate(area_lower_1,lower_shock_line_index,min_press_index,time_sheared(upper_shock_line_index),nt,time_sheared,pressure_thickness)
-        call integrate(area_lower_2,min_press_index,mid_shock_line_index,time_sheared(upper_shock_line_index),nt,time_sheared,pressure_thickness)
+        call locateLineIndex(min_index, min_press_index, lower_shock_line_index, time_sheared(upper_shock_line_index), nt, time_sheared)
+        call locateLineIndex(min_press_index, max_press_index, mid_shock_line_index, time_sheared(upper_shock_line_index), nt, time_sheared)
+        
+        call integrate(area_lower_1, lower_shock_line_index, min_press_index, time_sheared(upper_shock_line_index), nt, time_sheared, pressure_thickness)
+        call integrate(area_lower_2, min_press_index, mid_shock_line_index, time_sheared(upper_shock_line_index), nt, time_sheared, pressure_thickness)
         
         area_lower = abs(area_lower_2 - area_lower_1)
         
-        call integrate(area_upper_1,mid_shock_line_index,max_press_index,time_sheared(upper_shock_line_index),nt,time_sheared,pressure_thickness)
-        call integrate(area_upper_2,max_press_index,upper_shock_line_index,time_sheared(upper_shock_line_index),nt,time_sheared,pressure_thickness)
+        call integrate(area_upper_1, mid_shock_line_index, max_press_index, time_sheared(upper_shock_line_index), nt, time_sheared, pressure_thickness)
+        call integrate(area_upper_2, max_press_index, upper_shock_line_index, time_sheared(upper_shock_line_index), nt, time_sheared, pressure_thickness)
         
         area_upper = area_upper_2 - area_upper_1 
         net_area = area_upper + area_lower
@@ -48,20 +49,20 @@ subroutine applyShock(max_press_index,min_press_index,min_index,max_index,nt,tim
         
     end do
     
-    upper_shock_line_index = upper_shock_line_index + 1
+    upper_shock_line_index = upper_shock_line_index 
     lower_shock_line_index = lower_shock_line_index
     
-    call shockLine(nt,time_sheared,lower_shock_line_index,upper_shock_line_index,pressure_thickness)
+    call shockLine(nt, time_sheared, lower_shock_line_index, upper_shock_line_index, pressure_thickness)
     
 end subroutine applyShock
 !*****************************************************************************
-subroutine locateLineIndex(start_index,end_index,locate_index,target_value,n,array)
+subroutine locateLineIndex(start_index, end_index, locate_index, target_value, n, array)
     integer,intent(in):: start_index,end_index,n
     integer,intent(out):: locate_index
     real,intent(in):: target_value
     real,dimension(n),intent(in):: array
     
-    real:: test,start_value,current_value,start_diff,current_diff
+    real:: test, start_value, current_value, start_diff, current_diff
     integer:: i
     
     test = 1.0
