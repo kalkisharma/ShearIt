@@ -227,10 +227,6 @@ subroutine calculateGamma(nt,mach,chord,gamma_angle,time,pressure)
     integer,dimension(1):: minimum_pressure_index,maximum_pressure_index
     real:: percent_shift,check,time_minimum,time_maximum,delta_time,time_shift
     
-!    gamma_angle = 0.00013
-    
-    !ERROR: Insert blade numbers in from input file
-    
     if (mach .lt. 0.6) then
         percent_shift = 0.0
     elseif (mach .ge. 0.6 .and. mach .lt. 0.8) then
@@ -257,7 +253,7 @@ subroutine calculateGamma(nt,mach,chord,gamma_angle,time,pressure)
     
 !    time_shift = percent_shift * delta_time
     
-    gamma_angle = percent_shift * chord / 0.25 !atan(time_shift/abs(pressure(minimum_pressure_index(1))))
+    gamma_angle = percent_shift * chord / 0.25 
 end subroutine
 !*****************************************************************************
 !subroutine applyShock(nt,time_sheared,time_shock_bottom_index,time_shock_top_index,pressure_thickness_amplified)
