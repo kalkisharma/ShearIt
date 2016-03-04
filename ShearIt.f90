@@ -14,41 +14,52 @@ program ShearIt
     
     integer:: nt,nt_fine !Time Steps 
     real:: mach,chord !Mach number and Chord
-    real,dimension(:),allocatable:: time_input,pressure_thickness,pressure_thickness_nondim,pressure_thickness_amplified,time_sheared,pressure_loading,pressure_total,pressure_thickness_spaced
-    real,dimension(:),allocatable:: time_input_fine, pressure_thickness_fine
+    real,dimension(:),allocatable:: time_input, pressure_thickness, pressure_adjustable_nondim
+    real,dimension(:),allocatable:: pressure_adjustable_amplified, time_sheared, pressure_loading
+	real,dimension(:),allocatable:: pressure_total, pressure_adjustable_spaced, pressure_adjustable
+	real,dimension(:),allocatable:: time_input_fine, pressure_adjustable_fine
     real,dimension(:),allocatable:: time, pressure
 	
     ! Reads in the mach number and time steps from the HSIParameters.txt file
     call readParameters(chord,mach,nt,nt_fine)
     
-    allocate(time_input(nt),pressure_thickness(nt), pressure_loading(nt), pressure_total(nt))
-	allocate(pressure_thickness_nondim(nt_fine), pressure_thickness_amplified(nt_fine)) 
-	allocate(time_sheared(nt_fine), pressure_thickness_spaced(nt_fine))
-    allocate(time_input_fine(nt_fine), pressure_thickness_fine(nt_fine))
+    allocate(time_input(nt),pressure_thickness(nt), pressure_loading(nt), pressure_total(nt), pressure_adjustable(nt))
+	allocate(pressure_adjustable_nondim(nt_fine), pressure_adjustable_amplified(nt_fine)) 
+	allocate(time_sheared(nt_fine), pressure_adjustable_spaced(nt_fine))
+    allocate(time_input_fine(nt_fine), pressure_adjustable_fine(nt_fine))
 	allocate(time(nt), pressure(nt))
 	
     ! Reads the time and pressure values from the tecplot file
-    call readPressureTimeHistory(nt, time_input, pressure_total, pressure_loading, pressure_thickness)
+    call readPressureTimeHistory(nt, time_input, pressure_thickness, pressure_loading, pressure_total)
 	
-	call fineSignal(nt, time_input, pressure_thickness, nt_fine, time_input_fine, pressure_thickness_fine)
+	! Acoustic pressure history to be altered
+	pressure_adjustable = pressure_total
+	
+	! Increases resolution of signal 
+	call fineSignal(nt, time_input, pressure_adjustable, nt_fine, time_input_fine, pressure_adjustable_fine)
 	
     ! Nondimensionalize pressure array with respect to the negative peak pressure
-    call nonDimensionalizeSignal(nt_fine, pressure_thickness_fine, pressure_thickness_nondim)
+    call nonDimensionalizeSignal(nt_fine, pressure_adjustable_fine, pressure_adjustable_nondim)
     
 	! Shear the amplified signal by gamma angle value
-    call shearSignal(nt_fine, mach, chord, pressure_thickness_fine, pressure_thickness_nondim, time_input_fine, time_sheared)
+    call shearSignal(nt_fine, mach, chord, pressure_adjustable_fine, pressure_adjustable_nondim, &
+						time_input_fine, time_sheared)
 
     ! Multiplies thickness pressure by amplification factor dependent on Mach #
-    call amplifySignal(nt_fine, mach, pressure_thickness_fine, pressure_thickness_amplified)
+    call amplifySignal(nt_fine, mach, pressure_adjustable_fine, pressure_adjustable_amplified)
     
-	call coarseSignal(nt, time, pressure, nt_fine, time_sheared, pressure_thickness_amplified)
+	! Changes fine signal back to original resolution
+	call coarseSignal(nt, time, pressure, nt_fine, time_sheared, pressure_adjustable_amplified)
 	
-	call spaceSignal(nt, pressure, pressure_thickness_spaced, time_input, time)
+	! Spaces out adjusted signal to same spacing as inputed signal
+	call spaceSignal(nt, pressure, pressure_adjustable_spaced, time_input, time)
+	
     ! Writes out tecplot file
-    call writeTecplot(nt, time_input, pressure_total, pressure_loading, pressure_thickness_spaced)
+    call writeTecplot(nt, time_input, pressure_thickness, pressure_loading, pressure_adjustable_spaced)
     
     deallocate(time_input, pressure_thickness)
-	deallocate(pressure_thickness_nondim, pressure_thickness_amplified, time_sheared, pressure_loading, pressure_total, pressure_thickness_spaced)
-    deallocate(time_input_fine, pressure_thickness_fine)
+	deallocate(pressure_adjustable_nondim, pressure_adjustable_amplified, time_sheared) 
+	deallocate(pressure_loading, pressure_total, pressure_adjustable_spaced)
+    deallocate(time_input_fine, pressure_adjustable_fine)
 	deallocate(time, pressure)
 end program ShearIt

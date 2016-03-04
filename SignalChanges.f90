@@ -14,10 +14,10 @@ module Signal
     
     contains
 !*****************************************************************************
-subroutine fineSignal(nt, time_input, pressure_thickness, nt_fine, time_input_fine, pressure_thickness_fine)
+subroutine fineSignal(nt, time_input, pressure_amplified, nt_fine, time_input_fine, pressure_amplified_fine)
 	integer,intent(in):: nt,nt_fine
-	real,dimension(nt),intent(in):: time_input, pressure_thickness
-	real,dimension(nt_fine),intent(out):: time_input_fine, pressure_thickness_fine
+	real,dimension(nt),intent(in):: time_input, pressure_amplified
+	real,dimension(nt_fine),intent(out):: time_input_fine, pressure_amplified_fine
 	
 	integer:: i,j
 	
@@ -25,48 +25,52 @@ subroutine fineSignal(nt, time_input, pressure_thickness, nt_fine, time_input_fi
 	do i = 1,nt_fine
 		if (mod(i,2) .ne. 0) then
 			time_input_fine(i) = time_input(j)
-			pressure_thickness_fine(i) = pressure_thickness(j)
+			pressure_amplified_fine(i) = pressure_amplified(j)
 			j = j + 1
 		else if (mod(i,2) .eq. 0) then
 			time_input_fine(i) = (time_input(j) + time_input(j - 1)) / 2
-			pressure_thickness_fine(i) = (pressure_thickness(j) + pressure_thickness(j - 1)) / 2
+			pressure_amplified_fine(i) = (pressure_amplified(j) + pressure_amplified(j - 1)) / 2
 		end if
 	end do
 	
 end subroutine fineSignal
 !*****************************************************************************
-subroutine nonDimensionalizeSignal(nt,pressure_thickness,pressure_thickness_nondim)
+subroutine nonDimensionalizeSignal(nt, pressure_amplified, pressure_amplified_nondim)
     integer,intent(in):: nt
-    real,dimension(nt),intent(in):: pressure_thickness
-    real,dimension(nt),intent(out):: pressure_thickness_nondim
+    real,dimension(nt),intent(in):: pressure_amplified
+    real,dimension(nt),intent(out):: pressure_amplified_nondim
     
     real:: minimum
     
-    minimum = abs(minval(pressure_thickness))
+    minimum = abs(minval(pressure_amplified))
     
-    pressure_thickness_nondim = pressure_thickness / minimum
+    pressure_amplified_nondim = pressure_amplified / minimum
 end subroutine nonDimensionalizeSignal
 !*****************************************************************************
-subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondim,time_input,time_sheared)
+subroutine shearSignal(nt, mach, chord, pressure_amplified, pressure_amplified_nondim, time_input, time_sheared)
     integer,intent(in):: nt
     real,intent(in):: mach,chord
-    real,dimension(nt),intent(in):: time_input,pressure_thickness_nondim
+    real,dimension(nt),intent(in):: time_input, pressure_amplified_nondim
     real,dimension(nt),intent(out):: time_sheared 
-    real,dimension(nt),intent(inout):: pressure_thickness
+    real,dimension(nt),intent(inout):: pressure_amplified
     
-    integer:: i,j,time_maximum_index,time_minimum_index,time_shock_top_index,time_shock_bottom_index,max_shock_index,min_shock_index,mid_line_index
-    integer,dimension(1):: min_line_index,max_line_index
-    real:: gamma_angle,tan_gamma
-    real:: delta_time,time_maximum,time_minimum,time_average,time_shock_top,time_current,time_shock_bottom,difference,previous_difference,time_shift
+    integer:: i, j, time_maximum_index, time_minimum_index
+	integer:: time_shock_top_index, time_shock_bottom_index
+	integer:: max_shock_index, min_shock_index, mid_line_index
+    integer,dimension(1):: min_line_index, max_line_index
+    real:: gamma_angle, tan_gamma
+    real:: delta_time, time_maximum, time_minimum, time_average
+	real:: time_shock_top, time_current, time_shock_bottom
+	real:: difference, previous_difference, time_shift
     real,dimension(nt):: time_widened
-    logical:: time_max,time_min,time_half
+    logical:: time_max, time_min, time_half
     
-    call calculateGamma(nt,mach,chord,gamma_angle,time_input,pressure_thickness_nondim)
+    call calculateGamma(nt,mach,chord,gamma_angle,time_input,pressure_amplified_nondim)
     
     time_max = .false.
     time_min = .false.
     time_half = .true.
-    delta_time = pressure_thickness_nondim(1) * tan(gamma_angle)
+    delta_time = pressure_amplified_nondim(1) * tan(gamma_angle)
     tan_gamma = tan(gamma_angle)
     time_sheared(1) = time_input(1) - delta_time
     time_average = 1
@@ -75,7 +79,7 @@ subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondi
     do i = 2,nt
     
         ! Shears the signal
-        delta_time = pressure_thickness_nondim(i) * tan_gamma
+        delta_time = pressure_amplified_nondim(i) * tan_gamma
         time_sheared(i) = time_input(i) - delta_time
         
         ! If the signal begins curving back on itself
@@ -118,13 +122,13 @@ subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondi
             
             min_shock_index = j + 1
             
-            max_line_index = minloc(pressure_thickness(min_shock_index:time_maximum_index))
+            max_line_index = minloc(pressure_amplified(min_shock_index:time_maximum_index))
             max_line_index = max_line_index + min_shock_index
-            min_line_index = maxloc(pressure_thickness(time_minimum_index:max_shock_index))
+            min_line_index = maxloc(pressure_amplified(time_minimum_index:max_shock_index))
             min_line_index = min_line_index + time_minimum_index
             mid_line_index = int((max_line_index(1) + min_line_index(1)) / 2)
             
-            call applyShock(min_line_index(1), max_line_index(1), min_shock_index, max_shock_index, nt, time_sheared, pressure_thickness)
+            call applyShock(min_line_index(1), max_line_index(1), min_shock_index, max_shock_index, nt, time_sheared, pressure_amplified)
             
         end if
         
@@ -155,7 +159,7 @@ subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondi
 !            time_shock_bottom = time_sheared(j + 1)
 !            ! Call subroutine to insert shocks where signal loops back on itself
 !            ! ERROR: IF signal starts or ends in middle of signal, then issue with inserting shock
-!            call applyShock(nt,time_sheared,time_shock_bottom_index,time_shock_top_index,pressure_thickness)
+!            call applyShock(nt,time_sheared,time_shock_bottom_index,time_shock_top_index,pressure_amplified)
 !            
 !        end if
         
@@ -165,11 +169,11 @@ subroutine shearSignal(nt,mach,chord,pressure_thickness,pressure_thickness_nondi
     
 end subroutine shearSignal
 !*****************************************************************************
-subroutine amplifySignal(nt,mach,pressure_thickness,pressure_thickness_amplified)
+subroutine amplifySignal(nt,mach,pressure_amplified,pressure_amplified_amplified)
     integer,intent(in):: nt
     real,intent(in):: mach
-    real,dimension(nt),intent(in):: pressure_thickness
-    real,dimension(nt),intent(out):: pressure_thickness_amplified
+    real,dimension(nt),intent(in):: pressure_amplified
+    real,dimension(nt),intent(out):: pressure_amplified_amplified
     
     real:: mach_factor,HSI_factor
 
@@ -196,12 +200,12 @@ subroutine amplifySignal(nt,mach,pressure_thickness,pressure_thickness_amplified
         HSI_factor = 1
     end if
     
-    pressure_thickness_amplified = pressure_thickness * HSI_factor
+    pressure_amplified_amplified = pressure_amplified * HSI_factor
 end subroutine amplifySignal
 !*****************************************************************************
-subroutine coarseSignal(nt, time, pressure, nt_fine, time_sheared, pressure_thickness_amplified)
+subroutine coarseSignal(nt, time, pressure, nt_fine, time_sheared, pressure_amplified_amplified)
 	integer,intent(in):: nt, nt_fine
-	real,dimension(nt_fine),intent(in):: time_sheared, pressure_thickness_amplified
+	real,dimension(nt_fine),intent(in):: time_sheared, pressure_amplified_amplified
 	real,dimension(nt),intent(out):: time, pressure
 	
 	integer:: i,j
@@ -210,7 +214,7 @@ subroutine coarseSignal(nt, time, pressure, nt_fine, time_sheared, pressure_thic
 	do i = 1,nt_fine
 		if (mod(i,2) .ne. 0) then	
 			time(j) = time_sheared(i)
-			pressure(j) = pressure_thickness_amplified(i)
+			pressure(j) = pressure_amplified_amplified(i)
 			j = j + 1
 		end if
 	end do
@@ -253,6 +257,7 @@ subroutine calculateGamma(nt,mach,chord,gamma_angle,time,pressure)
     
 !    time_shift = percent_shift * delta_time
     
+	! 0.25ft is the chord length of Baeder's UH-1H blade 
     gamma_angle = percent_shift * chord / 0.25 
 end subroutine
 !*****************************************************************************
