@@ -28,7 +28,7 @@ program ShearIt
 	allocate(time(nt), pressure(nt))
 	
     ! Reads the time and pressure values from the tecplot file
-    call readPressureTimeHistory(nt,time_input,pressure_thickness,pressure_loading,pressure_total)
+    call readPressureTimeHistory(nt, time_input, pressure_total, pressure_loading, pressure_thickness)
 	
 	call fineSignal(nt, time_input, pressure_thickness, nt_fine, time_input_fine, pressure_thickness_fine)
 	
@@ -45,7 +45,7 @@ program ShearIt
 	
 	call spaceSignal(nt, pressure, pressure_thickness_spaced, time_input, time)
     ! Writes out tecplot file
-    call writeTecplot(nt, time_input, pressure_thickness_spaced, pressure_loading, pressure_total)
+    call writeTecplot(nt, time_input, pressure_total, pressure_loading, pressure_thickness_spaced)
     
     deallocate(time_input, pressure_thickness)
 	deallocate(pressure_thickness_nondim, pressure_thickness_amplified, time_sheared, pressure_loading, pressure_total, pressure_thickness_spaced)
