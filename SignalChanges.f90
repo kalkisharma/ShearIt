@@ -234,7 +234,7 @@ subroutine calculateGamma(nt,mach,chord,gamma_angle,time,pressure)
     if (mach .lt. 0.6) then
         percent_shift = 0.0
     elseif (mach .ge. 0.6 .and. mach .lt. 0.8) then
-        percent_shift = 0.1519 * mach - 0.1236
+        percent_shift = -0.001 * (mach ** 2) + 0.0018 * mach - 0.008 
     elseif (mach .ge. 0.8 .and. mach .lt. 0.85) then
         percent_shift = 0.0004 * mach - 0.0003
     elseif (mach .ge. 0.85 .and. mach .lt. 0.88) then
