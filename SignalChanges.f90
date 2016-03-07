@@ -176,7 +176,9 @@ subroutine amplifySignal(nt,mach,pressure_amplified,pressure_amplified_amplified
     real,dimension(nt),intent(out):: pressure_amplified_amplified
     
     real:: mach_factor,HSI_factor
-
+	
+	
+	! ERROR: Insert failsafe if Mach = 1 or greater
     mach_factor = 1 / (1 - mach)
 
     if (mach_factor .lt. 2.5) then
